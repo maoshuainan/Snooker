@@ -1,9 +1,9 @@
 import unittest
 import pygame
-import balls
-from settings import *
-from game import Game
-from vec2D import Vec2d as Vec2D
+from snooker import balls
+from .settings import *
+from .game import Game
+from .vec2D import Vec2d as Vec2D
 
 
 class GameTestWithRedBallsNoBallHitted(unittest.TestCase):

@@ -1,5 +1,5 @@
 import pygame
-from settings import SCREEN_SIZE, CUE_WIDTH
+from .settings import SCREEN_SIZE, CUE_WIDTH
 
 
 class Draw():

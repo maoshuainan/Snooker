@@ -1,7 +1,7 @@
 import pygame
 import math
-from settings import *
-from vec2D import Vec2d as Vec2D
+from .settings import *
+from .vec2D import Vec2d as Vec2D
 
 
 class Ball():

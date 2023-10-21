@@ -1,7 +1,7 @@
 import pygame
-from game import Game
-from score import Score
-from settings import *
+from snooker.game import Game
+from snooker.score import Score
+from snooker.settings import *
 
 
 def main():

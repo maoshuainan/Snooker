@@ -2,7 +2,7 @@
 A brief description about snooker environment.
 
 | Action Spacce | Tuple(Discrete(360), Discrete(90)) |
-| Observation Space | Tuple(Continuous(22,2)([133, 966], [83, 490]))
+| Observation Space | Tuple(Box(22,2)([133, 966], [83, 490]))
 
 # Description
 The detail of environment.

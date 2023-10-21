@@ -1,13 +1,13 @@
 import pygame
-from settings import *
-import balls
+from .settings import *
+from snooker import balls
 import math
-from vec2D import Vec2d as Vec2D
+from .vec2D import Vec2d as Vec2D
 from collections import deque
-from cue import Cue
-from score import Score
-from player import Player
-from draw import Draw
+from .cue import Cue
+from .score import Score
+from .player import Player
+from .draw import Draw
 
 
 class Game():
@@ -33,7 +33,7 @@ class Game():
         self.hitted_balls = deque([])
         self.potted = []
         pygame.display.set_caption('Cool Snooker')
-        self.table = pygame.image.load('Snooker_table3.png')
+        self.table = pygame.image.load('./snooker/Snooker_table3.png')
         self.white_ball = balls.WhiteBall(coords=POS_WHITE)
         self.redball1 = balls.RedBall(coords=POS_RED1)
         self.redball2 = balls.RedBall(coords=POS_RED2)
@@ -196,47 +196,56 @@ class Game():
             self.turn.change_target()
 
     def game_handler(self):
+        # 展示分数
         self.score.show_score(self.first_player, self.second_player, self.turn)
+        # 对所有球进行碰撞判定
         self.ball_update()
+        # 判断桌面是否是静止（STATICK）状态
         self.if_statick_board()
+        # 判断现在应当击打哪个球
         self.check_condition()
+        # 初始化犯规情况
         self.foul = False
         if self.board_status == STATICK:
+            # 没打中球的情况
             if not self.hitted_balls and self.hit is True and not self.potted:
                 self.change_turn()
                 self.turn.points += FOUL_POINTS
                 # print("Foul no ball hit")
+            # 等待击球
             self.hit = False
             self.cue_handler()
+            # 如果击中球了
             if self.hitted_balls:
+                # condition 应当是判断是否该清彩了
                 if self.condition == STILL_RED:
-                    if (isinstance(self.hitted_balls[0], balls.ColorBall)
+                    if (isinstance(self.hitted_balls[0], balls.ColorBall)# 如果第一个打到的球是彩球，但本回合目标球不是彩球
                             and self.turn.target != COLOR_TARGET) or\
-                            (isinstance(self.hitted_balls[0], balls.RedBall)
+                            (isinstance(self.hitted_balls[0], balls.RedBall)# 或者第一个打到的是红球，但本回合目标球不是红球
                              and self.turn.target != RED_TARGET):
-                        if not self.potted:
-                            self.foul = True
-                            self.change_turn()
+                        if not self.potted: # 如果没有落袋
+                            self.foul = True # 犯规
+                            self.change_turn() # 更改回合
                             # print("Foul wrong ball hit")
                             if self.hitted_balls[0].points > FOUL_POINTS:
-                                self.turn.points += self.hitted_balls[0].points
+                                self.turn.points += self.hitted_balls[0].points # 对手加分，超过4分加彩球分数
                             else:
-                                self.turn.points += FOUL_POINTS
+                                self.turn.points += FOUL_POINTS # 否则加4分
                         else:
-                            self.foul = True
-                            points = [self.hitted_balls[0].points]
+                            self.foul = True # 犯规
+                            points = [self.hitted_balls[0].points] # 分数是第一个击中的球的分数
                             self.potted_ball_handler(self.potted,
                                                      color_points=points)
-                    if self.potted and self.foul is not True:
-                        self.potted_ball_handler(self.potted)
-                    elif self.foul is not True:
+                    if self.potted and self.foul is not True: # 如果落袋并且没犯规
+                        self.potted_ball_handler(self.potted) # 转落袋球控制器
+                    elif self.foul is not True: # 如果没犯规
                         # print("No ball poted")
-                        self.change_turn()
+                        self.change_turn() # 对方回合
                 else:
-                    self.no_red_game_handler()
-                self.hitted_balls = deque([])
-            if self.potted:
-                self.potted_ball_handler(self.potted)
+                    self.no_red_game_handler() # 转清彩环节
+                self.hitted_balls = deque([]) # 初始化击中的球向量
+            if self.potted: # 如果落袋
+                self.potted_ball_handler(self.potted) # 转落袋球控制器
 
     def change_turn(self):
         if self.turn == self.first_player:

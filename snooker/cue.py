@@ -1,5 +1,5 @@
-from settings import CUE_DEFAULT_R, BROWN
-from vec2D import Vec2d as Vec2D
+from .settings import CUE_DEFAULT_R, BROWN
+from .vec2D import Vec2d as Vec2D
 import pygame
 import math
 
