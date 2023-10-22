@@ -20,8 +20,6 @@ class OneRedEnv(gym.Env):
         self.window_size = SCREEN_SIZE  # The size of the PyGame window
         self.time_limit = time_limit
         
-        # Observations are dictionaries with the agent's and the target's location.
-        # Each location is encoded as an element of {0, ..., `size`}^2, i.e. MultiDiscrete([size, size]).
         _low_boundeds = np.array([100,50])
         _high_boundeds = np.array([1000,523])
         self.observation_space = spaces.Tuple((spaces.Box(_low_boundeds, _high_boundeds, dtype=np.float32),
@@ -62,7 +60,8 @@ class OneRedEnv(gym.Env):
     
     def step(self, action):
         self.time += 1
-        self.game.cue_handler(action)
+        self.start_pos, self.end_pos = self.game.cue_handler(action)
+        
         while True:
             self.game.game_handler()
             if self.render_mode == "human":
@@ -83,6 +82,19 @@ class OneRedEnv(gym.Env):
         if self.render_mode == "rgb_array":
             self._render_frame()
     
+    def _render_background(self):
+        self.game.painter.game_surface.fill(BACKGROUND_COLOR)
+        self.game.painter.game_surface.blit(self.game.table, TABLE_POS)
+        self.game.painter.game_surface.blit(self.game.score.score_board, SCORE)
+    
+    def _render_balls(self):
+        for ball in self.game.all_balls:
+            if ball.vizibility:
+                self.game.painter.draw_balls(ball)
+
+    def _render_cue(self):
+        self.game.painter.cue_draw(self.game.cue, self.start_pos, self.end_pos)
+
     def _render_frame(self):
         if self.screen is None and self.render_mode == "human":
             pygame.init()
@@ -93,9 +105,14 @@ class OneRedEnv(gym.Env):
         if self.clock is None and self.render_mode == "human":
             self.clock = pygame.time.Clock()
         
-        self.game.painter.game_surface.fill(BACKGROUND_COLOR)
-        self.game.painter.game_surface.blit(self.game.table, TABLE_POS)
-        self.game.painter.game_surface.blit(self.game.score.score_board, SCORE)
+        # for event in pygame.event.get():
+        #     if event.type == pygame.QUIT:
+        #         return False
+        
+        self._render_background()
+        if self.game.hit:
+            self._render_cue()
+        self._render_balls()    
         self.screen.blit(self.game.painter.game_surface, (0, 0))
         pygame.display.flip()
         self.clock.tick(self.metadata["render_fps"])
@@ -145,6 +162,8 @@ class OneRedGame():
         self.painter = Draw()
     
     def game_handler(self):
+        # 展示分数
+        self.score.show_score(self.first_player, self.second_player, self.turn)
         # 对所有球进行碰撞判定
         self.ball_update()
         # 对所有球进行位置更新
@@ -184,10 +203,10 @@ class OneRedGame():
             
     def cue_handler(self, action):
         angle = action["angle"]
-        r = action["force"]
+        r2 = action["force"]
         start_pos = Vec2D(0, 0)
         end_pos = Vec2D(0, 0)
-        r2 = r - 160
+        r = r2 + 160
         if r < CUE_DEFAULT_R:
             r = CUE_DEFAULT_R
         if r > CUE_DEFAULT_R + CUE_DEFAULT_R / 2:
@@ -201,6 +220,8 @@ class OneRedGame():
         self.white_ball.velocity = new_velocity *\
             force ** 2 / MIN_HITTING_FORCE
         self.hit = True
+        return start_pos, end_pos
+        
         
     def ball_update(self):
         for a in range(0, len(self.all_balls)-1):
@@ -255,8 +276,6 @@ class OneRedGame():
                 ball.move(self.pockets)
             if ball.is_potted and ball not in self.potted:
                 self.potted.append(ball)
-            if ball.vizibility:
-                self.painter.draw_balls(ball)
     
     def get_balls_coords(self):
         return tuple([x.coords for x in self.all_balls])
